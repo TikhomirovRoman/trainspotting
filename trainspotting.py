@@ -15,6 +15,8 @@ from telegram.ext import (ApplicationBuilder,
                           filters,
                           MessageHandler)
 
+from settings import bot_token
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.WARNING
