@@ -5,3 +5,4 @@
 /venv
 /bash.exe.stackdump
 /py_log.log
+/base.db
