@@ -31,7 +31,7 @@ if data:
     logging.debug(f'get data from DB {data}')
 
 
-app = Client("my_account")
+app = Client("my_account", api_id=api_id, api_hash=api_hash)
 
 
 async def send_contact(client, message):
@@ -209,7 +209,8 @@ async def trainspotting(client, message):
     global data
     if message.text == '/send_report':
         logging.debug('SEND REPORT handler')
-        if not data['report_status'] == 'sending_in_progress':
+
+        if not data or not data['report_status'] == 'sending_in_progress':
             data = update_data()
             await asyncio.sleep(0.5)
             logging.debug('sending /start command to to_pred_bot')
