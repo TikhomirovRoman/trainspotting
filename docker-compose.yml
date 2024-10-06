@@ -1,0 +1,25 @@
+version: '3.3'
+
+volumes:
+  TRAINSPOTTING_DB:
+  PHOTOS:
+
+services:
+  db:
+    image: postgres:13.10
+    env_file: ./.env
+    volumes:
+      - TRAINSPOTTING_DB:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  trainspotting:
+    build: ./trainspotting
+    env_file: ./trainspotting/.env
+    volumes:
+      - PHOTOS:/bot/photos
+  
+  smekaylo:
+    build: ./smekaylo
+    env_file: ./smekaylo/.env
+    volumes:
+      - PHOTOS:/bot/photos
