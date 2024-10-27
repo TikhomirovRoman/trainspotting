@@ -83,16 +83,16 @@ def save_engineer(cur, name, phone_number):
     return cur.fetchone()[0]
 
 
-def save_result(msg, route_id):
-    date = datetime.now().strftime("%m-%d-%Y %H:%M")
-    with psycopg2.connect(
-        dbname=DB_NAME, user=DB_USER,
-        host=DB_HOST, password=DB_PASSWORD) as conn:
-            cur = conn.cursor()
-            sql = f"UPDATE route SET \
-                status = {SENT}, date_sent=\'{date}\', result=\'{msg}\'\
-                WHERE route_id = {route_id}"
-            cur.execute(sql)
+# def save_result(msg, route_id):
+#     date = datetime.now().strftime("%m-%d-%Y %H:%M")
+#     with psycopg2.connect(
+#         dbname=DB_NAME, user=DB_USER,
+#         host=DB_HOST, password=DB_PASSWORD) as conn:
+#             cur = conn.cursor()
+#             sql = f"UPDATE route SET \
+#                 status = {SENT}, date_sent=\'{date}\', result=\'{msg}\'\
+#                 WHERE route_id = {route_id}"
+#             cur.execute(sql)
 
 
 def save_route(cur, route, engineer, command_car, chat_id):

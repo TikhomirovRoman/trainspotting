@@ -1,7 +1,7 @@
 /settings.py
 /my_account.session
 /photos/*
-/__pycache__
+__pycache__/
 /venv
 /bash.exe.stackdump
 /py_log.log

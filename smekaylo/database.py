@@ -7,6 +7,7 @@ DB_NAME = os.getenv('POSTGRES_DB')
 DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
 DB_HOST = os.getenv('DB_HOST')
+DB_PRODUCT = os.getenv('DB_PRODUCT')
 
 # DB = 'base.db'
 READY_TO_SEND = 1
@@ -59,6 +60,23 @@ def get_next_route():
                 data['tests_photo'].append(line[1])
     conn.close()
     return data
+
+
+def save_info(info, route_id):
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
+                            host=DB_PRODUCT, password=DB_PASSWORD)
+    with conn:
+        cur = conn.cursor()
+        sql = "UPDATE route SET info =%(info)s WHERE route_id=%(route_id)s;\
+               INSERT INTO route (route_id, info) SELECT %(route_id)s, %(info)s\
+               WHERE NOT EXISTS (SELECT 1 FROM route WHERE route_id=%(route_id)s);"
+        # sql = "INSERT INTO route(route_id, info) \
+        #     VALUES (%(route_id)s, %(info)s)"
+        # sql = f"UPDATE route SET \
+        #     info = '{info}'\
+        #     WHERE route_id = {route_id}"
+        cur.execute(sql, {'route_id': route_id, 'info': info})
+    conn.close()
 
 
 def save_result(msg, route_id):

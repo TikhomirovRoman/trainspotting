@@ -7,14 +7,17 @@ import database
 
 from telegram import (Update, ReplyKeyboardMarkup,
                       InlineKeyboardButton,
-                      InlineKeyboardMarkup, KeyboardButton)
+                      InlineKeyboardMarkup, KeyboardButton,
+                      constants
+                      )
 from telegram.ext import (ApplicationBuilder,
                           CallbackQueryHandler,
                           ContextTypes,
                           ConversationHandler,
                           CommandHandler,
                           filters,
-                          MessageHandler)
+                          MessageHandler,
+                          )
 
 bot_token = os.getenv('bot_token')
 
@@ -25,7 +28,7 @@ logging.basicConfig(
 PHOTOS_PATH = 'photos'
 SMEKAYLO_CHAT = 7500531360
 
-buttons = ReplyKeyboardMarkup([['/identify', '/show', '/start', '/send']],
+buttons = ReplyKeyboardMarkup([['/identify', '/show', '/send']],
                               resize_keyboard=True)
 
 
@@ -103,7 +106,8 @@ async def route_id(update, context):
     context.user_data['route_id'] = update.message.text
     route = database.get_route(update.message.text)
     if route:
-        await update.message.reply_text(route)
+        await update.message.reply_text(route,
+                                        parse_mode=constants.ParseMode.HTML)
     else:
         await update.message.reply_text('Новый рейс')
     await update.message.reply_text(
