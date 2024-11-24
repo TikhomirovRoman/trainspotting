@@ -4,7 +4,7 @@ import uuid
 import os
 
 import database
-
+from datetime import datetime
 from telegram import (Update, ReplyKeyboardMarkup,
                       InlineKeyboardButton,
                       InlineKeyboardMarkup, KeyboardButton,
@@ -53,8 +53,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if 'contact_tel' not in context.user_data:
         await get_contact(update, context)
         return 'get_contact'
+
     await context.bot.send_message(chat_id=update.effective_chat.id,
-                                   text="Укажите ID рейса",)
+                                   text="Укажите ID рейса или дату в формате ДД.ММ",)
     return 'route_id'
 
 
@@ -98,20 +99,26 @@ async def show(update, context):
         )
 
 
+async def send_route_info(update, context, route_id):
+    context.user_data['route_id'] = route_id
+    route = database.get_route(route_id)
+    if route:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text=route,
+                                       parse_mode=constants.ParseMode.HTML)
+    else:
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text='Новый рейс')
+    await context.bot.send_message(chat_id=update.effective_chat.id,
+                                   text=f'Номер рейса: {route_id}, \n прикрепите фото')
+
+
 async def route_id(update, context):
     if not re.match(r"^\d{7}$", update.message.text):
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text="Укажите ID рейса",)
         return 'route_id'
-    context.user_data['route_id'] = update.message.text
-    route = database.get_route(update.message.text)
-    if route:
-        await update.message.reply_text(route,
-                                        parse_mode=constants.ParseMode.HTML)
-    else:
-        await update.message.reply_text('Новый рейс')
-    await update.message.reply_text(
-        f'Номер рейса: {update.message.text}, \n прикрепите фото')
+    send_route_info(update, context, update.message.text)
     return 'photo'
 
 
@@ -189,7 +196,7 @@ async def car_number_input(update, context):
     return 'car_number'
 
 
-async def button(update, context):
+async def photo_type_button(update, context):
     query = update.callback_query
     if query.data == 'DEL':
         context.user_data['unknown_photos'].pop()
@@ -240,9 +247,6 @@ async def send(update, context):
                                        text='укажите штабной вагон')
         return 'set_command_car'
     else:
-        # with open('base.json', 'w') as file:
-        #     json.dump(context.user_data, file)
-
         if database.save(context.user_data):
             await context.bot.send_message(chat_id=update.effective_chat.id,
                                            text="Данные сохранены")
@@ -277,12 +281,55 @@ async def check_contact(update, context):
         context.user_data['contact_tel'] = update.message.contact.phone_number
         context.user_data['chat_id'] = update.effective_chat.id
         await context.bot.send_message(update.effective_chat.id,
-                                       'Котакт сохранен.\nУкажите ID рейса')
+                                       'Котакт сохранен.\nУкажите ID рейса либо дату')
         return 'route_id'
+
     await context.bot.send_message(
         update.effective_chat.id,
         'Требуется авторизация. Нажмите "поделиться контактом".')
     return 'get_contact'
+
+
+async def date_input(update, context):
+    requested_date = update.message.text
+    if len(requested_date.split('.')) == 2:
+        day, month = requested_date.split('.')
+        if int(month) > datetime.now().month:
+            year = str(datetime.now().year - 1)
+        else:
+            year = str(datetime.now().year)
+        requested_date = '.'.join((day, month, year))
+    routes = database.get_routes(requested_date)
+    week = ('понедельник', 'вторник',
+            'среда', 'четверг', 'пятница',
+            'суббота', 'воскресенье')
+    status_ico = {0: '\u2728', 1: '\u1F4E', 2: '\u274C', 3: '\u2705'}
+    date = datetime.strptime(requested_date, '%d.%m.%Y')
+    weekday = (week[date.weekday()])
+    keyboard = [[]]
+    current_line = 0
+    for route in routes:
+        if len(keyboard[current_line]) > 1:
+            keyboard.append([])
+            current_line += 1
+        keyboard[current_line].append(
+            InlineKeyboardButton(
+                f"{status_ico.get(route[2], status_ico[0])} {route[1]} ({route[0]})",
+                callback_data=route[0],
+                ),
+            )
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text(f"{requested_date} <b>{weekday}</b>",
+                                    reply_markup=reply_markup,
+                                    parse_mode=constants.ParseMode.HTML)
+
+
+async def route_button(update, context):
+    await update.callback_query.answer()
+    await send_route_info(update, context, update.callback_query.data)
+    return 'photo'
+
 
 
 if __name__ == '__main__':
@@ -303,7 +350,9 @@ if __name__ == '__main__':
                                         car_number_input)
     route_id_handler = MessageHandler(filters.Regex(r"^\d{7}$"),
                                       route_id)
-    inline_buttons_handler = CallbackQueryHandler(button)
+    date_handler = MessageHandler(filters.Regex(r"^\d{2}\.\d{2}(?:\.\d{4})?$"), date_input)
+    type_buttons_handler = CallbackQueryHandler(photo_type_button)
+    route_buttons_handler = CallbackQueryHandler(route_button)
     report_handler = CommandHandler('report', notify_smekaylo)
     set_command_car_handler = MessageHandler(filters.Regex(r"^\d{3}[ -]?\d{5}$"),
                                              set_command_car)
@@ -312,10 +361,10 @@ if __name__ == '__main__':
         entry_points=[start_handler],
         states={
             'get_contact': [start_handler, contact_handler],
-            'route_id': [route_id_handler],
+            'route_id': [route_id_handler, date_handler, route_buttons_handler],
             'photo': [photo_handler, identify_handler],
             'car_number': [photo_handler, car_number_handler,
-                           inline_buttons_handler, identify_handler,
+                           type_buttons_handler, identify_handler,
                            ],
             'set_command_car': [set_command_car_handler],
         },

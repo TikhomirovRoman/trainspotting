@@ -10,7 +10,7 @@ api_id = os.getenv('api_id')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,
+    level=logging.WARNING,
     filename="py_log.log",
     filemode="w",
     )
@@ -26,6 +26,7 @@ def update_data():
     if data:
         data['cars_iterator'] = iter(data['known_photos'])
         data['extra_photos_iterator'] = iter(data['tests_photo'])
+    print(data)
     return data
 
 

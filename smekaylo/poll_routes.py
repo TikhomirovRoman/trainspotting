@@ -23,19 +23,38 @@ print(datetime.datetime.now())
 app = Client("my_account", api_id=api_id, api_hash=api_hash)
 
 
-def new_poll(message):
-    try:
-        if message.text[:11] == 'Авторизация':
-            print('true')
-            return True
-    except Exception:
-        return False
+class routes_generator(object):
+    def __init__(self, start_pos, stop_pos):
+        self.start_pos = start_pos
+        self.stop_pos = stop_pos
+        self.current_route = start_pos
+        self.stop_flag = False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if not self.stop_flag and self.current_route <= self.stop_pos:
+            self.current_route += 1
+            return self.current_route
+        raise StopIteration()
+
+
+routes = iter(routes_generator(1000000, 1000001))
+results = {}
 
 
 @app.on_message(filters.incoming & filters.chat(ADMIN_CHAT))
 async def trainspotting_chat(client, message):
-    if message.text == '/poll':
-        await client.send_message(FPK_TOPRED_BOT, '/start')
+    global routes
+    if message.text[:5] == '/poll':
+        pool = re.findall(r'\d{7}', message.text)
+        if len(pool) != 2:
+            await client.send_message(ADMIN_CHAT,
+                                      'укажите диапазон в формате /poll 1234567 7654321')
+        else:
+            routes = iter(routes_generator(int(pool[0]), int(pool[1])))
+            await client.send_message(FPK_TOPRED_BOT, '/start')
 
 
 def parse_message(message):
@@ -57,26 +76,6 @@ async def send_contact(client, message):
     await client.send_contact(FPK_TOPRED_BOT,
                               SMEKAYLO_PHONE,
                               SMEKAYLO_NAME)
-
-
-class routes_generator(object):
-    def __init__(self, start_pos):
-        self.start_pos = start_pos
-        self.current_route = start_pos
-        self.stop_flag = False
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if not self.stop_flag:
-            self.current_route += 1
-            return self.current_route
-        raise StopIteration()
-
-
-routes = iter(routes_generator(6439915))
-results = {}
 
 
 async def send_id(client, message):
@@ -103,9 +102,10 @@ async def save_route(client, message):
     if departure_date[0:10] == '2024-11-01':
         routes.stop_flag = True
     route_info = f'<b>{route_name}</b>\n{departure_date} <b>{weekday}</b>'
-    print(route_info)
+    print(routes.current_route, route_info)
     results[routes.current_route] = route_info
-    database.save_info(route_info, routes.current_route)
+    database.save_info(route_info, departure_date[0:10],
+                       route_name, routes.current_route)
     await client.send_message(FPK_TOPRED_BOT,
                               'Предрейсовое техническое обслуживание')
 

@@ -5,7 +5,7 @@ from datetime import datetime
 DB_NAME = os.getenv('POSTGRES_DB')
 DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_HOST = os.getenv('DB_HOST')
+DB_HOST = os.getenv('DB_PRODUCT')
 
 # DB = 'DB/base.db'
 READY_TO_SEND = 1
@@ -24,6 +24,18 @@ def get_route(route_id):
         result = cur.fetchone()
         if result:
             return result[0]
+
+
+def get_routes(date):
+    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
+                            host=DB_HOST, password=DB_PASSWORD)
+    with conn:
+        cur = conn.cursor()
+        cur.execute("SELECT route.route_id, route_name.route_name, route.status FROM route\
+                    JOIN route_name ON route.route_name=route_name.id\
+                    WHERE route.departure_date = TO_DATE(%s, 'DD.MM.YYYY');",
+                    (date,))
+        return (cur.fetchall())
 
 
 def get_next_route():
@@ -102,7 +114,8 @@ def save_route(cur, route, engineer, command_car, chat_id):
         VALUES(%(route_id)s,\'info\',\'None\',%(engineer)s,1,%(date_created)s,\'None\',\
                %(command_car)s, %(chat_id)s)\
         ON CONFLICT (route_id) DO UPDATE SET \
-        date_created = %(date_created)s, status = 1, chat_id = %(chat_id)s;'
+        date_created = %(date_created)s, status = 1, chat_id = %(chat_id)s, \
+        engineer=%(engineer)s, command_car=%(command_car)s;'
     cur.execute(sql,
                 {'route_id': route, 'engineer': engineer,
                  'date_created': date, 'command_car': command_car,

@@ -22,10 +22,18 @@ CREATE TABLE IF NOT EXISTS "route"(
 	"date_sent" TEXT,
 	"command_car" INTEGER,
 	"chat_id" INTEGER,
+	"departure_date" DATE,
+	"route_name" INT,
     CONSTRAINT "route_constraints"
 	    FOREIGN KEY ("engineer") REFERENCES engineer(id),
 	    FOREIGN KEY ("status") REFERENCES status(id),
 	    FOREIGN KEY ("command_car") REFERENCES car(id)
+		FOREIGN KEY ('route_name') REFERENCES route_name(id)
+);
+
+CREATE TABLE IF NOT EXISTS "route_name" (
+	"id" SERIAL PRIMARY KEY,
+	"route_name" TEXT UNIQUE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS "photo_type" (
