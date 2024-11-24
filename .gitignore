@@ -1,6 +1,7 @@
 /settings.py
 /my_account.session
 /photos/*
+/trainspotting/photos/*
 __pycache__/
 /venv
 /bash.exe.stackdump
