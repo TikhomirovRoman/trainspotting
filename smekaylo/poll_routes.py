@@ -23,38 +23,52 @@ print(datetime.datetime.now())
 app = Client("my_account", api_id=api_id, api_hash=api_hash)
 
 
-class routes_generator(object):
-    def __init__(self, start_pos, stop_pos):
-        self.start_pos = start_pos
-        self.stop_pos = stop_pos
-        self.current_route = start_pos
-        self.stop_flag = False
+# class routes_generator(object):
+#     def __init__(self, start_pos, stop_pos):
+#         self.start_pos = start_pos
+#         self.stop_pos = stop_pos
+#         self.current_route = start_pos
+#         self.next_route = self.current_route
+#         self.stop_flag = False
 
-    def __iter__(self):
-        return self
+#     def __iter__(self):
+#         return self
 
-    def __next__(self):
-        if not self.stop_flag and self.current_route <= self.stop_pos:
-            self.current_route += 1
-            return self.current_route
-        raise StopIteration()
+#     def __next__(self):
+#         if not self.stop_flag and self.current_route < self.stop_pos:
+#             self.current_route = self.next_route
+#             self.next_route += 1
+#             return self.current_route
+#         raise StopIteration()
 
 
-routes = iter(routes_generator(1000000, 1000001))
+routes = iter([])
+current_route = ''
 results = {}
+
+
+def validate_request(data):
+    for route_id in data.split(','):
+        if not re.match(r'\d{7}$', route_id.strip()):
+            return False
+    return True
 
 
 @app.on_message(filters.incoming & filters.chat(ADMIN_CHAT))
 async def trainspotting_chat(client, message):
     global routes
+    global current_route
+    print('current_route id: ', id(current_route))
     if message.text[:5] == '/poll':
-        pool = re.findall(r'\d{7}', message.text)
-        if len(pool) != 2:
+        if not validate_request(message.text[5:]):
             await client.send_message(ADMIN_CHAT,
-                                      'укажите диапазон в формате /poll 1234567 7654321')
+                                      'отправьте /poll и список рейсов через запятую')
         else:
-            routes = iter(routes_generator(int(pool[0]), int(pool[1])))
+            routes = iter(message.text[5:].split(','))
             await client.send_message(FPK_TOPRED_BOT, '/start')
+    else:
+        await client.sent_message(message.chat.id,
+                                  'отправьте /poll и список рейсов через запятую')
 
 
 def parse_message(message):
@@ -80,18 +94,22 @@ async def send_contact(client, message):
 
 async def send_id(client, message):
     global routes
+    global current_route
     global results
     try:
-        next_id = next(routes)
+        next_id = next(routes).strip()
+        current_route = next_id
+        print('current_route id: ', id(current_route))
         await asyncio.sleep(0.2)
         await client.send_message(FPK_TOPRED_BOT, next_id)
     except StopIteration:
-        await client.send_message(ADMIN_CHAT, results[routes.current_route],
+        await client.send_message(ADMIN_CHAT, results[current_route],
                                   parse_mode=enums.ParseMode.HTML)
 
 
 async def save_route(client, message):
     global results
+    global current_route
     global routes
     route_name = re.findall(r'рейса: (\w+)', message.text)[0]
     departure_date = re.findall(
@@ -99,13 +117,11 @@ async def save_route(client, message):
         message.text)[0]
     date = datetime.datetime.strptime(departure_date, '%Y-%m-%d %H:%M')
     weekday = (week[date.weekday()])
-    if departure_date[0:10] == '2024-11-01':
-        routes.stop_flag = True
     route_info = f'<b>{route_name}</b>\n{departure_date} <b>{weekday}</b>'
-    print(routes.current_route, route_info)
-    results[routes.current_route] = route_info
+    print(route_info)
+    results[current_route] = route_info
     database.save_info(route_info, departure_date[0:10],
-                       route_name, routes.current_route)
+                       route_name, current_route)
     await client.send_message(FPK_TOPRED_BOT,
                               'Предрейсовое техническое обслуживание')
 

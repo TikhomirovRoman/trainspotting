@@ -1,13 +1,7 @@
 import psycopg2
-import os
 from datetime import datetime
+from config import DB_NAME, DB_HOST, DB_PASSWORD, DB_USER
 
-DB_NAME = os.getenv('POSTGRES_DB')
-DB_USER = os.getenv('POSTGRES_USER')
-DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_HOST = os.getenv('DB_PRODUCT')
-
-# DB = 'DB/base.db'
 READY_TO_SEND = 1
 ERROR = 2
 SENT = 3
@@ -31,7 +25,8 @@ def get_routes(date):
                             host=DB_HOST, password=DB_PASSWORD)
     with conn:
         cur = conn.cursor()
-        cur.execute("SELECT route.route_id, route_name.route_name, route.status FROM route\
+        cur.execute("SELECT route.route_id, route_name.route_name, \
+                    route.status FROM route\
                     JOIN route_name ON route.route_name=route_name.id\
                     WHERE route.departure_date = TO_DATE(%s, 'DD.MM.YYYY');",
                     (date,))
@@ -40,12 +35,12 @@ def get_routes(date):
 
 def get_next_route():
     with psycopg2.connect(
-        dbname=DB_NAME, user=DB_USER,
-        host=DB_HOST, password=DB_PASSWORD) as conn:
+            dbname=DB_NAME, user=DB_USER,
+            host=DB_HOST, password=DB_PASSWORD) as conn:
         cur = conn.cursor()
         sql = """SELECT route.route_id, engineer.name, engineer.phone_number,
         route.chat_id, car.name
-        FROM route 
+        FROM route
         JOIN engineer ON engineer.id = route.engineer
         JOIN car ON car.id = route.command_car
         JOIN status ON status.id = route.status
@@ -56,7 +51,7 @@ def get_next_route():
         data = {}
         if not result:
             return data
-         
+
         data['command_car'] = result[4]
         data['route_id'] = str(result[0])
         data['chat_id'] = result[3]
@@ -93,18 +88,6 @@ def save_engineer(cur, name, phone_number):
     sql = 'INSERT INTO engineer(name, phone_number) VALUES (%s, %s);'
     cur.execute(sql, (name, phone_number))
     return cur.fetchone()[0]
-
-
-# def save_result(msg, route_id):
-#     date = datetime.now().strftime("%m-%d-%Y %H:%M")
-#     with psycopg2.connect(
-#         dbname=DB_NAME, user=DB_USER,
-#         host=DB_HOST, password=DB_PASSWORD) as conn:
-#             cur = conn.cursor()
-#             sql = f"UPDATE route SET \
-#                 status = {SENT}, date_sent=\'{date}\', result=\'{msg}\'\
-#                 WHERE route_id = {route_id}"
-#             cur.execute(sql)
 
 
 def save_route(cur, route, engineer, command_car, chat_id):

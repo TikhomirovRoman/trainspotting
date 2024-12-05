@@ -71,8 +71,8 @@ def save_info(info, departure_date, route_name, route_id):
         
         cur.execute('SELECT * FROM route_name;')
         routes_cache = dict()
-        for id, route_name in cur.fetchall():
-            routes_cache[route_name] = id
+        for id, name in cur.fetchall():
+            routes_cache[name] = id
         if route_name not in routes_cache:
             cur.execute("INSERT INTO route_name(route_name)\
                                 VALUES (%s) RETURNING id;", (route_name,))
