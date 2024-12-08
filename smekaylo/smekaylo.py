@@ -11,7 +11,7 @@ api_id = os.getenv('api_id')
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.WARNING,
-    filename="py_log.log",
+    filename="./logs/py_log.log",
     filemode="w",
     )
 
@@ -142,7 +142,7 @@ async def send_comment(client, message):
 
 async def send_final_comment(client, message):
     global data
-    logging.info('final command was sent')
+    logging.info('final comment was sent')
     await client.send_message(FPK_TOPRED_BOT,
                               'Без замечаний')
     data['report_status'] = 'sent'
@@ -166,6 +166,7 @@ async def do_nothing(client, message):
 
 
 async def stop_report(client, message):
+    print('STOP REPORT')
     msg = str(data['route_id']) + '\n' + \
         data['route_info'] + '\n' + \
         data['current_trainset']

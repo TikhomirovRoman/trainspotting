@@ -100,6 +100,7 @@ def save_info(info, departure_date, route_name, route_id):
 
 
 def save_result(msg, route_id):
+    print('DATABASE save_result')
     date = datetime.now().strftime("%m-%d-%Y %H:%M")
     conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
                             host=DB_HOST, password=DB_PASSWORD)
@@ -113,8 +114,7 @@ def save_result(msg, route_id):
     conn.close()
 
 
-if __name__ == '__main__':
-    pass
+# if __name__ == '__main__':
     # conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
     #                         host=DB_HOST, password=DB_PASSWORD)
     # with conn:

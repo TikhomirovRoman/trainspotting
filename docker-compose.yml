@@ -1,6 +1,7 @@
 volumes:
   TRAINSPOTTING_DB:
   PHOTOS:
+  LOGS:
 
 services:
   db:
@@ -21,3 +22,4 @@ services:
     env_file: ./smekaylo/.env
     volumes:
       - PHOTOS:/bot/photos
+      - LOGS:/bot/logs
