@@ -224,4 +224,6 @@ async def trainspotting(client, message):
         else:
             logging.info('got /send_report while in progress')
 
+
+print('smekaylo bot starting...')
 app.run()
