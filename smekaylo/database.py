@@ -6,13 +6,7 @@ from datetime import datetime
 DB_NAME = os.getenv('POSTGRES_DB')
 DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_LOCAL = os.getenv('DB_PRODUCT')
-DB_PRODUCT = os.getenv('DB_PRODUCT')
-DEBUG = os.getenv("TRAINSPOTTING_DEBUG", default=False)
-if DEBUG:
-    DB_HOST = DB_LOCAL
-else:
-    DB_HOST = DB_PRODUCT
+DB_HOST = os.getenv('DB_HOST')
 
 READY_TO_SEND = 1
 ERROR = 2
