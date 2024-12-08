@@ -107,7 +107,7 @@ def save_result(msg, route_id):
         cur = conn.cursor()
         sql = f"UPDATE route SET \
             status = {SENT}, date_sent=\'{date}\', result=\'{msg}\'\
-            WHERE route_id = {route_id}"
+            WHERE route_id = {route_id};"
         cur.execute(sql)
     conn.close()
 

@@ -10,7 +10,7 @@ api_id = os.getenv('api_id')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
     filename="py_log.log",
     filemode="w",
     )
@@ -32,62 +32,62 @@ def update_data():
 
 data = update_data()
 # data = {}
-logging.debug('Smekaylo started')
+logging.info('Smekaylo started')
 if data:
-    logging.debug(f'get data from DB {data}')
+    logging.info(f'get data from DB {data}')
 
 
 app = Client("my_account", api_id=api_id, api_hash=api_hash)
 
 
 async def send_contact(client, message):
-    logging.debug('get request to authorize')
+    logging.info('get request to authorize')
     global data
     if data and data['report_status'] == 'ready_to_send':
-        logging.debug(f'there is pending route {data["route_id"]}')
+        logging.info(f'there is pending route {data["route_id"]}')
         data['report_status'] = 'sending_in_progress'
         await client.send_contact(FPK_TOPRED_BOT,
                                   data['contact_tel'],
                                   data['contact_name'])
-        logging.debug('contact to auth was sent')
+        logging.info('contact to auth was sent')
     else:
-        logging.debug('there is no pending route or it is in progress')
+        logging.info('there is no pending route or it is in progress')
 
 
 async def send_route(client, message):
     global data
     if data['report_status'] == 'sent':
-        logging.debug("prev route was sent, requesting for next")
+        logging.info("prev route was sent, requesting for next")
         data = update_data()
         if data:
-            logging.debug('get next route, send "/start" command')
+            logging.info('get next route, send "/start" command')
             data['report_status'] == 'sending_in_progress'
             await client.send_message(FPK_TOPRED_BOT, "/start")
         return
     if data['report_status'] == 'sending_in_progress':
-        logging.debug('current route sending is in progress')
-        logging.debug(f'sending route_id {data["route_id"]}')
+        logging.info('current route sending is in progress')
+        logging.info(f'sending route_id {data["route_id"]}')
         await client.send_message(FPK_TOPRED_BOT, data['route_id'])
 
 
 async def send_start_topred(client, message):
     data['route_info'] = message.text
-    logging.debug(f'get route info: {message.text}')
-    logging.debug('choosing to start TO_PRED')
+    logging.info(f'get route info: {message.text}')
+    logging.info('choosing to start TO_PRED')
     await client.send_message(FPK_TOPRED_BOT,
                               'Предрейсовое техническое обслуживание')
 
 
 async def analize_trainset(client, message):
-    logging.debug(f'getting next car from data')
+    logging.info(f'getting next car from data')
     data['current_trainset'] = message.text
     try:
         data['next_car'] = next(data['cars_iterator'])
-        logging.debug('got next car from trainset')
+        logging.info('got next car from trainset')
         await client.send_message(FPK_TOPRED_BOT,
                                   'Добавить вагон')
     except StopIteration:
-        logging.debug('no next car in current trainset')
+        logging.info('no next car in current trainset')
         await client.send_message(FPK_TOPRED_BOT,
                                   'Отправить диспетчеру')
         data['next_car'] = ''
@@ -96,72 +96,72 @@ async def analize_trainset(client, message):
 async def send_car_number(client, message):
     if 'next_car' not in data:
         data['next_car'] = next(data['cars_iterator'])
-    logging.debug(f'sending next car number: {data["next_car"]}')
+    logging.info(f'sending next car number: {data["next_car"]}')
     await client.send_message(FPK_TOPRED_BOT,
                               data['next_car'])
 
 
 async def send_photo(client, message):
-    logging.debug(f'sending photo for current car')
+    logging.info(f'sending photo for current car')
     await client.send_photo(
         FPK_TOPRED_BOT,
         f'{PHOTOS_PATH}/{data["known_photos"][data["next_car"]]}')
 
 
 async def send_yes(client, message):
-    logging.debug('sending YES')
+    logging.info('sending YES')
     await client.send_message(FPK_TOPRED_BOT,
                               'Да')
 
 
 async def send_extra_photo(client, message):
-    logging.debug('got request to add extra photos')
+    logging.info('got request to add extra photos')
     if len(message.text) <= 50:
         return
     if data['next_car'] == data['command_car']:
-        logging.debug(f'current car is command_car: {data["command_car"]}')
+        logging.info(f'current car is command_car: {data["command_car"]}')
         try:
             await client.send_photo(
                 FPK_TOPRED_BOT,
                 f'{PHOTOS_PATH}/{next(data["extra_photos_iterator"])}')
-            logging.debug('send extra photo')
+            logging.info('send extra photo')
             return
         except StopIteration:
-            logging.debug('there are no next extra photos in data')
+            logging.info('there are no next extra photos in data')
             pass
     await client.send_message(FPK_TOPRED_BOT,
                               '.')
-    logging.debug('"." was sent to jump over')
+    logging.info('"." was sent to jump over')
 
 
 async def send_comment(client, message):
-    logging.debug('comment sent')
+    logging.info('comment sent')
     await client.send_message(FPK_TOPRED_BOT,
                               'Без замечаний')
 
 
 async def send_final_comment(client, message):
     global data
-    logging.debug('final command was sent')
+    logging.info('final command was sent')
     await client.send_message(FPK_TOPRED_BOT,
                               'Без замечаний')
     data['report_status'] = 'sent'
 
 
 async def send_add_car(client, message):
-    logging.debug('sending "add car" command')
+    logging.info('sending "add car" command')
     await client.send_message(FPK_TOPRED_BOT,
                               'Добавить вагон')
 
 
 async def send_passline(client, message):
-    logging.debug('sending passline photo')
+    logging.info('sending passline photo')
     await client.send_photo(FPK_TOPRED_BOT,
                             f'{PHOTOS_PATH}/{data["passline_photo"]}')
 
 
 async def do_nothing(client, message):
-    logging.debug('nothing to do')
+    logging.info('nothing to do')
     pass
 
 
@@ -169,10 +169,10 @@ async def stop_report(client, message):
     msg = str(data['route_id']) + '\n' + \
         data['route_info'] + '\n' + \
         data['current_trainset']
-    logging.debug('sending report to TRAINSPOTTING bot')
+    logging.info('sending report to TRAINSPOTTING bot')
     await client.send_message(TRAINSPOTTING, msg)
     data['report_status'] = 'sent'
-    logging.debug('saving data to database')
+    logging.info('saving data to database')
     save_result(msg, data['route_id'])
 
 
@@ -199,7 +199,7 @@ schema = {
 
 @app.on_message(filters.incoming & filters.chat(FPK_TOPRED_BOT))
 async def fpk_topred_chat(client, message):
-    logging.debug('got answer from to_pred_bot')
+    logging.info('got answer from to_pred_bot')
     await asyncio.sleep(0.5)
     reply = message.text.replace('\n', ' ')[0:50]
     reply += ' '*(50-len(reply))
@@ -211,17 +211,17 @@ async def fpk_topred_chat(client, message):
 
 @app.on_message(filters.incoming & filters.chat(TRAINSPOTTING))
 async def trainspotting(client, message):
-    logging.debug('got message from Trainspotting bot')
+    logging.info('got message from Trainspotting bot')
     global data
     if message.text == '/send_report':
-        logging.debug('SEND REPORT handler')
+        logging.info('SEND REPORT handler')
 
         if not data or not data['report_status'] == 'sending_in_progress':
             data = update_data()
             await asyncio.sleep(0.5)
-            logging.debug('sending /start command to to_pred_bot')
+            logging.info('sending /start command to to_pred_bot')
             await client.send_message(FPK_TOPRED_BOT, '/start')
         else:
-            logging.debug('got /send_report while in progress')
+            logging.info('got /send_report while in progress')
 
 app.run()
