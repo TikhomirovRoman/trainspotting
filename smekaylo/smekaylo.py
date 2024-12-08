@@ -30,8 +30,8 @@ def update_data():
     return data
 
 
-data = update_data()
-# data = {}
+# data = update_data()
+data = {}
 logging.info('Smekaylo started')
 if data:
     logging.info(f'get data from DB {data}')
@@ -43,6 +43,7 @@ app = Client("my_account", api_id=api_id, api_hash=api_hash)
 async def send_contact(client, message):
     logging.info('get request to authorize')
     global data
+    data = update_data()
     if data and data['report_status'] == 'ready_to_send':
         logging.info(f'there is pending route {data["route_id"]}')
         data['report_status'] = 'sending_in_progress'
