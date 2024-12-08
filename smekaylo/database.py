@@ -109,6 +109,7 @@ def save_result(msg, route_id):
             status = {SENT}, date_sent=\'{date}\', result=\'{msg}\'\
             WHERE route_id = {route_id};"
         cur.execute(sql)
+        print(sql)
     conn.close()
 
 
