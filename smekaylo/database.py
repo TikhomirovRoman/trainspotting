@@ -62,7 +62,7 @@ def get_next_route():
 
 def save_info(info, departure_date, route_name, route_id):
     conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
-                            host=DB_PRODUCT, password=DB_PASSWORD)
+                            host=DB_HOST, password=DB_PASSWORD)
     with conn:
         cur = conn.cursor()
 
