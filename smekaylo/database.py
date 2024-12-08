@@ -1,16 +1,19 @@
 import psycopg2
 import os
-import re
 
 from datetime import datetime
 
 DB_NAME = os.getenv('POSTGRES_DB')
 DB_USER = os.getenv('POSTGRES_USER')
 DB_PASSWORD = os.getenv('POSTGRES_PASSWORD')
-DB_HOST = os.getenv('DB_PRODUCT')
+DB_LOCAL = os.getenv('DB_PRODUCT')
 DB_PRODUCT = os.getenv('DB_PRODUCT')
+DEBUG = os.getenv("TRAINSPOTTING_DEBUG", default=False)
+if DEBUG:
+    DB_HOST = DB_LOCAL
+else:
+    DB_HOST = DB_PRODUCT
 
-# DB = 'base.db'
 READY_TO_SEND = 1
 ERROR = 2
 SENT = 3
@@ -68,7 +71,7 @@ def save_info(info, departure_date, route_name, route_id):
                             host=DB_PRODUCT, password=DB_PASSWORD)
     with conn:
         cur = conn.cursor()
-        
+
         cur.execute('SELECT * FROM route_name;')
         routes_cache = dict()
         for id, name in cur.fetchall():
@@ -116,28 +119,29 @@ def save_result(msg, route_id):
 
 
 if __name__ == '__main__':
-    conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
-                            host=DB_HOST, password=DB_PASSWORD)
-    with conn:
-        cur = conn.cursor()
-        sql = """SELECT route_id, info FROM route"""
-        cur.execute(sql)
-        routes = cur.fetchall()        
-        cur.execute('SELECT * FROM route_name;')
-        routes_cache = dict()
-        for id, route_name in cur.fetchall():
-            routes_cache[route_name] = id
-        for route_id, info in routes:
-            route_name = re.search(r'<b>(.*?)</b>', info)
-            if route_name:
-                route_name = route_name.group(1)
-                if route_name not in routes_cache:
-                    cur.execute("INSERT INTO route_name(route_name)\
-                                VALUES (%s) RETURNING id;", (route_name,))
-                    route_name_id = cur.fetchone()
-                    routes_cache[route_name] = route_name_id
-                else:
-                    route_name_id = routes_cache[route_name]
-                cur.execute("UPDATE route SET route_name=(%s) WHERE route_id=(%s);", 
-                            (route_name_id, route_id))
-                print(route_name, route_id)
+    pass
+    # conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER,
+    #                         host=DB_HOST, password=DB_PASSWORD)
+    # with conn:
+    #     cur = conn.cursor()
+    #     sql = """SELECT route_id, info FROM route"""
+    #     cur.execute(sql)
+    #     routes = cur.fetchall()        
+    #     cur.execute('SELECT * FROM route_name;')
+    #     routes_cache = dict()
+    #     for id, route_name in cur.fetchall():
+    #         routes_cache[route_name] = id
+    #     for route_id, info in routes:
+    #         route_name = re.search(r'<b>(.*?)</b>', info)
+    #         if route_name:
+    #             route_name = route_name.group(1)
+    #             if route_name not in routes_cache:
+    #                 cur.execute("INSERT INTO route_name(route_name)\
+    #                             VALUES (%s) RETURNING id;", (route_name,))
+    #                 route_name_id = cur.fetchone()
+    #                 routes_cache[route_name] = route_name_id
+    #             else:
+    #                 route_name_id = routes_cache[route_name]
+    #             cur.execute("UPDATE route SET route_name=(%s) WHERE route_id=(%s);", 
+    #                         (route_name_id, route_id))
+    #             print(route_name, route_id)

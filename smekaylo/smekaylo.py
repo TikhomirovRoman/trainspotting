@@ -10,7 +10,7 @@ api_id = os.getenv('api_id')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.WARNING,
+    level=logging.DEBUG,
     filename="py_log.log",
     filemode="w",
     )
@@ -31,6 +31,7 @@ def update_data():
 
 
 data = update_data()
+# data = {}
 logging.debug('Smekaylo started')
 if data:
     logging.debug(f'get data from DB {data}')
