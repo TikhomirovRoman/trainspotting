@@ -10,7 +10,7 @@ api_id = os.getenv('api_id')
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.WARNING,
+    level=logging.INFO,
     filename="./logs/py_log.log",
     filemode="w",
     )
@@ -26,7 +26,7 @@ def update_data():
     if data:
         data['cars_iterator'] = iter(data['known_photos'])
         data['extra_photos_iterator'] = iter(data['tests_photo'])
-    print(data)
+    logging.info(f'got next route to send: {data}')
     return data
 
 
@@ -172,7 +172,7 @@ async def stop_report(client, message):
         data['route_info'] + '\n' + \
         data['current_trainset']
     logging.info('sending report to TRAINSPOTTING bot')
-    await client.send_message(TRAINSPOTTING, msg)
+    # await client.send_message(TRAINSPOTTING, msg)
     data['report_status'] = 'sent'
     logging.info('saving data to database')
     save_result(msg, data['route_id'])
@@ -195,7 +195,9 @@ schema = {
     "Комментарий по журналу ВУ-8  Напишите Ваш коммента": send_comment,
     "Предрейсовое техническое обслуживание  ❌ - по ваго": analize_trainset,
     "Предрейсовое техническое обслуживание  Напишите за": send_final_comment,
-    "Предрейсовое техническое обслуживание завершено  Б": stop_report
+    "Предрейсовое техническое обслуживание завершено  Б": stop_report,
+    "Информация по вагону №                            ": do_nothing,
+    "Спутниковая связь  Приложите ОДНУ фотографию прове": send_extra_photo
 }
 
 
@@ -204,16 +206,38 @@ async def fpk_topred_chat(client, message):
     logging.info('got answer from to_pred_bot')
     await asyncio.sleep(0.5)
     reply = message.text.replace('\n', ' ')[0:50]
+    if reply[0:22] == 'Информация по вагону №':
+        reply = 'Информация по вагону №'
     reply += ' '*(50-len(reply))
     try:
         await schema[reply](client, message)
     except KeyError:
-        pass
+        print(reply)
+        # await client.send_message(TRAINSPOTTING, reply)
 
 
 @app.on_message(filters.incoming & filters.chat(TRAINSPOTTING))
 async def trainspotting(client, message):
     logging.info('got message from Trainspotting bot')
+    global data
+    if message.text == '/send_report':
+        logging.info('SEND REPORT handler')
+
+        if not data or not data['report_status'] == 'sending_in_progress':
+            data = update_data()
+            await asyncio.sleep(0.5)
+            logging.info('sending /start command to to_pred_bot')
+            await client.send_message(FPK_TOPRED_BOT, '/start')
+        else:
+            logging.info('got /send_report while in progress')
+
+
+@app.on_message(filters.incoming & filters.chat(429760288))
+async def command(client, message):
+    print(message.text)
+    print(message.chat.id)
+    await asyncio.sleep(0.5)
+    logging.info('got message from 429760288')
     global data
     if message.text == '/send_report':
         logging.info('SEND REPORT handler')
