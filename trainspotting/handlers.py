@@ -10,7 +10,7 @@ from telegram.ext import (CallbackQueryHandler, ContextTypes, CommandHandler,
 from config import PHOTOS_PATH, SMEKAYLO_CHAT
 
 
-buttons = ReplyKeyboardMarkup([['/identify', '/show', '/send']],
+buttons = ReplyKeyboardMarkup([['🔍 распознать', '👁 показать', '📤 отправить']],
                               resize_keyboard=True)
 
 
@@ -140,7 +140,7 @@ async def route_id(update, context):
         await ask_route_id(update, context)
         context.user_data['current_state'] = 'route_id'
         return 'route_id'
-    send_route_info(update, context, update.message.text)
+    await send_route_info(update, context, update.message.text)
     context.user_data['current_state'] = 'photo'
     return 'photo'
 
@@ -190,11 +190,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_next_unknown_photo(update, context):
     buttons = [
         [
-            InlineKeyboardButton(text="Штаб", callback_data=str('COMMANDER')),
+            InlineKeyboardButton(text="🚂 штаб", callback_data=str('COMMANDER')),
             InlineKeyboardButton(
-                text="Попутчик", callback_data=str('PASSLINE')),
-            InlineKeyboardButton(text="Тесты", callback_data=str('TESTS')),
-            InlineKeyboardButton(text="Удалить", callback_data=str('DEL')),
+                text="🌐rzd.plus", callback_data=str('PASSLINE')),
+            # InlineKeyboardButton(text="📞", callback_data=str('PHONE')),
+            InlineKeyboardButton(text="📡 test", callback_data=str('TESTS')),
+            InlineKeyboardButton(text="❌ del", callback_data=str('DEL')),
         ]
     ]
     keyboard = InlineKeyboardMarkup(buttons)
@@ -258,6 +259,15 @@ async def photo_type_button(update, context):
         await query.answer()
         await context.bot.send_message(chat_id=update.effective_chat.id,
                                        text='тесты')
+        return await identify(update, context)
+    elif query.data == 'PHONE':
+        context.user_data.setdefault(
+            'phone_photo', []).append(context.user_data['unknown_photos'][-1])
+        context.user_data['unknown_photos'].pop()
+        await remove_buttons(update, context)
+        await query.answer()
+        await context.bot.send_message(chat_id=update.effective_chat.id,
+                                       text='звонок')
         return await identify(update, context)
     elif query.data == 'COMMANDER':
         context.user_data['current_car_is_COMMAND'] = True
@@ -353,9 +363,9 @@ route_id_handler = MessageHandler(filters.Regex(r"^\d{7}$"), route_id)
 date_handler = MessageHandler(filters.Regex(r"^\d{2}\.\d{2}(?:\.\d{4})?$"),
                               date_input)
 photo_handler = MessageHandler(filters.PHOTO, photo)
-identify_handler = CommandHandler('identify', identify)
-show_handler = CommandHandler('show', show)
-send_handler = CommandHandler('send', send)
+identify_handler = MessageHandler(filters.Text(['🔍 распознать',]), identify)
+show_handler = MessageHandler(filters.Text(['👁 показать',]), show)
+send_handler = MessageHandler(filters.Text(['📤 отправить',]), send)
 # auth_handler = CommandHandler('auth', get_contact)
 car_number_handler = MessageHandler(filters.Regex(r"^\d{3}-?\d{5}$"),
                                     car_number_input)

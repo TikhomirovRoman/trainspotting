@@ -153,6 +153,7 @@ def save(data):
                 save_route(cur, data['route_id'],
                            engineer, command_car, data['chat_id'])
                 print('route saved')
+                
                 save_photos(cur, data['route_id'], cars, data['known_photos'],
                             data['tests_photo'], data['passline_photo'])
                 print('photos saved')
